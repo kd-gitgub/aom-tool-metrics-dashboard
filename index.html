@@ -175,15 +175,37 @@
             text-align: left;
         }
 
+        .card-id {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.78em;
+            font-weight: 700;
+            opacity: 0.45;
+            text-align: right;
+        }
+
         .metric-card.light-gray .status-indicator,
         .metric-card.light-purple .status-indicator,
         .metric-card.light-orange .status-indicator {
             color: #001C66;
         }
 
+        .metric-card.light-gray .card-id,
+        .metric-card.light-purple .card-id,
+        .metric-card.light-orange .card-id {
+            color: #001C66;
+        }
+
         .metric-card.purple .status-indicator,
         .metric-card.blue .status-indicator,
         .metric-card.orange .status-indicator {
+            color: white;
+        }
+
+        .metric-card.purple .card-id,
+        .metric-card.blue .card-id,
+        .metric-card.orange .card-id {
             color: white;
         }
 
@@ -733,9 +755,29 @@
             `;
         }
 
+        // Card ID mapping - assigns letters in dashboard order
+        const cardIdMap = {
+            'discovery_calls': 'A',
+            'capabilities_defined': 'B',
+            'sme_capabilities': 'C',
+            'csat_response': 'D',
+            'tools': 'E',
+            'accounts': 'F',
+            'users': 'G',
+            'commercial': 'H',
+            'opensource': 'I',
+            'spend': 'J',
+            'savings': 'K',
+            'potential': 'L',
+            'csat': 'M',
+            'retired': 'N',
+            'new_tools': 'O'
+        };
+
         // Create a metric card element
         function createMetricCard(metric) {
             const colorClass = cardColorMap[metric.metric_id] || 'light-gray';
+            const cardId = cardIdMap[metric.metric_id] || '';
             const hasProgress = metric.progress_title && metric.progress_value;
             
             const progressHtml = hasProgress ? `
@@ -755,6 +797,7 @@
             return `
                 <div class="metric-card ${colorClass}" onclick="showModal('${metric.label}', '${metric.metric_id}')">
                     <div class="status-indicator">${metric.status || 'Pending'}</div>
+                    <div class="card-id">${cardId}</div>
                     <div class="metric-value">${metric.value}</div>
                     <div class="metric-label">${metric.label}</div>
                     ${progressHtml}
