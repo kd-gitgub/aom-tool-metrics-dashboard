@@ -27,27 +27,16 @@
             height: 100vh;
             overflow: auto; /* Allow scrolling within container */
             background: #0A142D;
+            border-top: 9px solid #8F29FC; /* Added purple top border at very top */
         }
 
         .container {
             min-width: 920px; /* Fixed minimum width */
             width: 920px; /* Fixed width to prevent responsive issues */
-            margin: 40px auto;
+            margin: 20px auto 40px auto; /* Reduced top margin since no header */
             padding: 0 20px;
         }
 
-        .header {
-            margin-bottom: 40px;
-            text-align: left;
-            margin-left: 240px; /* Align with the start of the metric cards */
-        }
-
-        .header h1 {
-            color: white;
-            font-size: 1.65em;
-            font-weight: 300;
-            letter-spacing: -0.02em;
-        }
 
         /* Dashboard with fixed layout */
         .dashboard-wrapper {
@@ -479,10 +468,6 @@
 <body>
     <div class="outer-wrapper">
         <div class="container">
-            <div class="header">
-                <h1>AOM Tooling Governance FY26</h1>
-            </div>
-
             <div class="dashboard-wrapper">
                 <div id="dashboard-container">
                     <div class="loading-container">Loading dashboard data...</div>
@@ -882,6 +867,10 @@
             
             const metric = metricsData[metricId];
             if (!metric) return;
+            
+            // Scroll to top to ensure modal is visible
+            window.scrollTo(0, 0);
+            document.querySelector('.outer-wrapper').scrollTop = 0;
             
             // Determine section and set header class
             modalHeader.className = 'modal-header';
