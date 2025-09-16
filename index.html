@@ -319,22 +319,19 @@
         /* Modal Styles */
         .modal-overlay {
             display: none;
-            position: fixed;
+            position: absolute; /* Changed from fixed to absolute */
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            min-height: 100%; /* Changed from height to min-height */
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             z-index: 1000;
             animation: fadeIn 0.3s ease;
-            align-items: center; /* Back to center */
-            justify-content: center;
-            padding: 20px;
         }
 
         .modal-overlay.show {
-            display: flex;
+            display: block; /* Changed from flex to block */
         }
 
         .modal-content {
@@ -343,18 +340,19 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             max-width: 600px;
             width: 90%;
-            max-height: 70vh; /* Reduced to fit better */
+            max-height: 70vh;
             overflow: hidden;
-            position: fixed; /* Changed to fixed positioning */
-            top: 50%; /* Center vertically */
-            left: 50%; /* Center horizontally */
-            transform: translate(-50%, -50%) scale(0.95); /* Center and scale */
+            position: absolute; /* Changed from fixed to absolute */
+            top: 100px; /* Fixed distance from top of page */
+            left: 50%;
+            transform: translateX(-50%) scale(0.95); /* Only translate X axis */
             opacity: 0;
             transition: all 0.3s ease;
+            margin: 0 auto;
         }
 
         .modal-overlay.show .modal-content {
-            transform: translate(-50%, -50%) scale(1); /* Maintain centering when shown */
+            transform: translateX(-50%) scale(1); /* Only translate X axis */
             opacity: 1;
         }
 
@@ -888,23 +886,31 @@
             const metric = metricsData[metricId];
             if (!metric) return;
             
-            // No need to scroll anymore - modal is fixed positioned
-            
-            // Determine section and set header class
-            modalHeader.className = 'modal-header';
-            if (metric.section === 'inputs') {
-                modalHeader.classList.add('inputs');
-            } else if (metric.section === 'inventory') {
-                modalHeader.classList.add('inventory');
-            } else if (metric.section === 'outcomes') {
-                modalHeader.classList.add('outcomes');
+            // Scroll to top when modal opens to ensure visibility
+            const wrapper = document.querySelector('.outer-wrapper');
+            if (wrapper) {
+                wrapper.scrollTop = 0;
             }
+            window.scrollTo(0, 0);
             
-            modalTitle.textContent = title;
-            metricDescription.textContent = metric.description || 'No description available.';
-            
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
+            // Small delay to ensure scroll happens before modal appears
+            setTimeout(() => {
+                // Determine section and set header class
+                modalHeader.className = 'modal-header';
+                if (metric.section === 'inputs') {
+                    modalHeader.classList.add('inputs');
+                } else if (metric.section === 'inventory') {
+                    modalHeader.classList.add('inventory');
+                } else if (metric.section === 'outcomes') {
+                    modalHeader.classList.add('outcomes');
+                }
+                
+                modalTitle.textContent = title;
+                metricDescription.textContent = metric.description || 'No description available.';
+                
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }, 100);
         }
 
         // Close modal
