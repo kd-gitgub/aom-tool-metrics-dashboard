@@ -352,6 +352,51 @@
             to { opacity: 1; }
         }
 
+        /* Refresh Button Styles */
+        .refresh-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: #0079FF;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 121, 255, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .refresh-button:hover {
+            background: #0066dd;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 121, 255, 0.4);
+        }
+
+        .refresh-button:active {
+            transform: scale(0.95);
+        }
+
+        .refresh-button svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+            transition: transform 0.5s ease;
+        }
+
+        .refresh-button.spinning svg {
+            animation: spin 0.5s linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1300px) {
             .dashboard-row {
                 grid-template-columns: repeat(2, 1fr);
@@ -406,6 +451,13 @@
             </div>
         </div>
     </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-button" onclick="refreshData()" title="Refresh data from CSV">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+    </button>
 
     <script>
         // Global variables to store metrics data
@@ -795,6 +847,75 @@
                 closeModal();
             }
         });
+
+        // Refresh data from CSV
+        async function refreshData() {
+            const button = document.querySelector('.refresh-button');
+            button.classList.add('spinning');
+            
+            // Clear existing data
+            metricsData = {};
+            metricsBySection = {};
+            
+            // Show loading state
+            const container = document.getElementById('dashboard-container');
+            container.innerHTML = '<div class="loading-container">Refreshing dashboard data...</div>';
+            
+            // Reload data with cache bypass
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`metrics-data.csv?t=${timestamp}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                
+                // Parse CSV using Papa Parse
+                const results = Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    trimHeaders: true,
+                    transformHeader: (header) => header.trim()
+                });
+
+                if (results.errors.length > 0) {
+                    console.warn('CSV parsing warnings:', results.errors);
+                }
+
+                // Process and organize data
+                results.data.forEach(row => {
+                    // Trim all values in the row
+                    Object.keys(row).forEach(key => {
+                        row[key] = row[key] ? row[key].trim() : '';
+                    });
+
+                    const metricId = row['metric_id'];
+                    const section = row['section'];
+                    
+                    if (metricId && section) {
+                        metricsData[metricId] = row;
+                        
+                        if (!metricsBySection[section]) {
+                            metricsBySection[section] = [];
+                        }
+                        metricsBySection[section].push(row);
+                    }
+                });
+
+                renderDashboard();
+                console.log('Dashboard data refreshed successfully');
+            } catch (error) {
+                console.warn('CSV file not found or could not be loaded. Using default values.', error);
+                useDefaultData();
+            } finally {
+                // Remove spinning animation
+                setTimeout(() => {
+                    button.classList.remove('spinning');
+                }, 500);
+            }
+        }
 
         // Initialize dashboard on page load
         document.addEventListener('DOMContentLoaded', loadMetricsData);
