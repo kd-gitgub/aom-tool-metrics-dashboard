@@ -319,19 +319,20 @@
         /* Modal Styles */
         .modal-overlay {
             display: none;
-            position: absolute; /* Changed from fixed to absolute */
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            min-height: 100%; /* Changed from height to min-height */
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 20px;
         }
 
         .modal-overlay.show {
-            display: block; /* Changed from flex to block */
+            display: block;
         }
 
         .modal-content {
@@ -340,20 +341,17 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             max-width: 600px;
             width: 90%;
-            max-height: 70vh;
-            overflow: hidden;
-            position: absolute; /* Changed from fixed to absolute */
-            top: 100px; /* Fixed distance from top of page */
-            left: 50%;
-            transform: translateX(-50%) scale(0.95); /* Only translate X axis */
+            max-height: none;
+            position: relative;
+            margin: 50px auto;
             opacity: 0;
+            transform: scale(0.95);
             transition: all 0.3s ease;
-            margin: 0 auto;
         }
 
         .modal-overlay.show .modal-content {
-            transform: translateX(-50%) scale(1); /* Only translate X axis */
             opacity: 1;
+            transform: scale(1);
         }
 
         .modal-overlay.show .modal-content {
@@ -886,38 +884,35 @@
             const metric = metricsData[metricId];
             if (!metric) return;
             
-            // Scroll to top when modal opens to ensure visibility
-            const wrapper = document.querySelector('.outer-wrapper');
-            if (wrapper) {
-                wrapper.scrollTop = 0;
+            // Determine section and set header class
+            modalHeader.className = 'modal-header';
+            if (metric.section === 'inputs') {
+                modalHeader.classList.add('inputs');
+            } else if (metric.section === 'inventory') {
+                modalHeader.classList.add('inventory');
+            } else if (metric.section === 'outcomes') {
+                modalHeader.classList.add('outcomes');
             }
-            window.scrollTo(0, 0);
             
-            // Small delay to ensure scroll happens before modal appears
-            setTimeout(() => {
-                // Determine section and set header class
-                modalHeader.className = 'modal-header';
-                if (metric.section === 'inputs') {
-                    modalHeader.classList.add('inputs');
-                } else if (metric.section === 'inventory') {
-                    modalHeader.classList.add('inventory');
-                } else if (metric.section === 'outcomes') {
-                    modalHeader.classList.add('outcomes');
-                }
-                
-                modalTitle.textContent = title;
-                metricDescription.textContent = metric.description || 'No description available.';
-                
-                modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
-            }, 100);
+            modalTitle.textContent = title;
+            metricDescription.textContent = metric.description || 'No description available.';
+            
+            modal.classList.add('show');
+            
+            // Ensure modal overlay scrolls to top when opened
+            modal.scrollTop = 0;
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+            document.querySelector('.outer-wrapper').style.overflow = 'hidden';
         }
 
-        // Close modal
+        // Update close modal function too
         function closeModal() {
             const modal = document.getElementById('trendModal');
             modal.classList.remove('show');
             document.body.style.overflow = '';
+            document.querySelector('.outer-wrapper').style.overflow = 'auto';
         }
 
         // Close modal when clicking outside
