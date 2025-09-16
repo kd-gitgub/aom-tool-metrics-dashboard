@@ -15,22 +15,31 @@
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #1a2642;
-            min-height: 100vh;
-            padding: 40px 20px;
+            padding: 0;
             margin: 0;
             color: white;
-            overflow-x: auto; /* Allow horizontal scroll on body */
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* Main container with overflow control like the working file */
+        .outer-wrapper {
+            width: 100vw;
+            height: 100vh;
+            overflow: auto; /* Allow scrolling within container */
+            background: #1a2642;
         }
 
         .container {
-            width: 920px; /* Fixed width to maintain layout */
-            margin: 0 auto;
+            min-width: 920px; /* Fixed minimum width */
+            width: 920px; /* Fixed width to prevent responsive issues */
+            margin: 40px auto;
+            padding: 0 20px;
         }
 
         .header {
             margin-bottom: 40px;
             text-align: left;
-            margin-left: calc(25% + 1px + 0.6em);
+            margin-left: 235px; /* Align with the start of the metric cards */
         }
 
         .header h1 {
@@ -40,38 +49,32 @@
             letter-spacing: -0.02em;
         }
 
-        /* Loading State */
-        .loading-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 400px;
-            color: white;
-            font-size: 1.2em;
+        /* Dashboard with fixed layout */
+        .dashboard-wrapper {
+            min-width: 880px;
+            overflow-x: auto; /* Allow horizontal scroll if needed */
+            overflow-y: visible;
         }
 
-        .error-container {
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid rgba(255, 0, 0, 0.3);
-            padding: 20px;
-            margin: 40px auto;
-            max-width: 600px;
-            border-radius: 8px;
-            color: white;
-        }
-
+        /* Fixed grid layout - no responsive changes */
         .dashboard-row {
-            margin-bottom: 15px;
+            margin-bottom: 20px; /* Increased vertical spacing */
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Always 4 columns */
-            gap: 2px;
+            grid-template-columns: 200px 200px 200px 200px; /* Fixed pixel widths */
+            gap: 15px; /* Restored proper spacing */
             align-items: center;
             justify-items: center;
+            width: 860px; /* Adjusted total width to account for gaps */
+            margin-left: auto;
+            margin-right: auto;
         }
 
+        /* All elements with fixed dimensions */
         .section-circle {
             width: 200px;
             height: 200px;
+            min-width: 200px;
+            min-height: 200px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -98,6 +101,8 @@
         .metric-card {
             width: 200px;
             height: 200px;
+            min-width: 200px;
+            min-height: 200px;
             padding: 35px 20px 65px 20px;
             display: flex;
             flex-direction: column;
@@ -148,6 +153,8 @@
         .empty-space {
             width: 200px;
             height: 200px;
+            min-width: 200px;
+            min-height: 200px;
             flex-shrink: 0;
         }
 
@@ -261,6 +268,26 @@
         .metric-card.light-purple .progress-title {
             color: #001C66;
             opacity: 1;
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .error-container {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 600px;
+            border-radius: 8px;
+            color: white;
         }
 
         /* Modal Styles */
@@ -419,36 +446,21 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
-        /* Scroll hint for narrow viewports */
-        .scroll-hint {
-            display: none;
-            text-align: center;
-            margin-top: 10px;
-            color: rgba(255, 255, 255, 0.7);
-            font-style: italic;
-            font-size: 0.9em;
-        }
-
-        /* Only show scroll hint when container is narrower than content */
-        @media (max-width: 940px) {
-            .scroll-hint {
-                display: block;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>AOM Tooling Governance FY26</h1>
-        </div>
+    <div class="outer-wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>AOM Tooling Governance FY26</h1>
+            </div>
 
-        <div id="dashboard-container">
-            <div class="loading-container">Loading dashboard data...</div>
+            <div class="dashboard-wrapper">
+                <div id="dashboard-container">
+                    <div class="loading-container">Loading dashboard data...</div>
+                </div>
+            </div>
         </div>
-        
-        <div class="scroll-hint">← Scroll horizontally to view full dashboard →</div>
     </div>
 
     <!-- Modal -->
