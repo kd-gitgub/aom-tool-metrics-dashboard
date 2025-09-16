@@ -39,7 +39,7 @@
         .header {
             margin-bottom: 40px;
             text-align: left;
-            margin-left: 235px; /* Align with the start of the metric cards */
+            margin-left: 240px; /* Align with the start of the metric cards */
         }
 
         .header h1 {
@@ -61,7 +61,7 @@
             margin-bottom: 20px; /* Increased vertical spacing */
             display: grid;
             grid-template-columns: 200px 200px 200px 200px; /* Fixed pixel widths */
-            gap: 15px; /* Restored proper spacing */
+            gap: 20px; /* Matched to vertical spacing */
             align-items: center;
             justify-items: center;
             width: 860px; /* Adjusted total width to account for gaps */
@@ -115,9 +115,34 @@
         }
 
         .metric-card:hover {
-            transform: translateY(-5px) scale(1.03);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+
+        /* Much darker on hover for light cards - maximum contrast */
+        .metric-card.light-gray:hover {
+            background: #8a92a1;
+        }
+
+        .metric-card.light-purple:hover {
+            background: #8b7d99;
+        }
+
+        .metric-card.light-orange:hover {
+            background: #d98f6b;
+        }
+
+        /* Much lighter on hover for dark cards - maximum contrast */
+        .metric-card.blue:hover {
+            background: #99ccff;
+        }
+
+        .metric-card.purple:hover {
+            background: #d4a9ff;
+        }
+
+        .metric-card.orange:hover {
+            background: #f0a980;
         }
 
         .metric-card.light-gray {
