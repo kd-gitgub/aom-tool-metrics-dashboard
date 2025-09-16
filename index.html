@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOM Tooling Governance FY26 - Analytics Tool Inventory</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a2642;
+            min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
+            color: white;
+        }
+
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            text-align: left;
+            margin-left: calc(25% + 1px + 0.6em);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.65em;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .error-container {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid rgba(255, 0, 0, 0.3);
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 600px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .dashboard-row {
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .section-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.05em;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .section-circle.inputs {
+            background: #0079FF;
+        }
+
+        .section-circle.inventory {
+            background: #8b3ffd;
+        }
+
+        .section-circle.outcomes {
+            background: #b85c38;
+        }
+
+        .metric-card {
+            width: 200px;
+            height: 200px;
+            padding: 35px 20px 65px 20px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            justify-content: flex-start;
+            border: 2px solid transparent;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .metric-card.light-gray {
+            background: #D7DDE8;
+            color: #001C66;
+        }
+
+        .metric-card.light-purple {
+            background: #D3CAD9;
+            color: #001C66;
+        }
+
+        .metric-card.light-orange {
+            background: #F7D5C6;
+            color: #001C66;
+        }
+
+        .metric-card.blue {
+            background: #0079FF;
+            color: white;
+        }
+
+        .metric-card.purple {
+            background: #8b3ffd;
+            color: white;
+        }
+
+        .metric-card.orange {
+            background: #b85c38;
+            color: white;
+        }
+
+        .empty-space {
+            width: 200px;
+            height: 200px;
+            flex-shrink: 0;
+        }
+
+        .metric-value {
+            font-size: 2.2em;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .metric-label {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            opacity: 0.95;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 5px;
+            left: 20px;
+            font-size: 0.65em;
+            font-weight: 700;
+            opacity: 1;
+            text-align: left;
+        }
+
+        .metric-card.light-gray .status-indicator,
+        .metric-card.light-purple .status-indicator,
+        .metric-card.light-orange .status-indicator {
+            color: #001C66;
+        }
+
+        .metric-card.purple .status-indicator,
+        .metric-card.blue .status-indicator,
+        .metric-card.orange .status-indicator {
+            color: white;
+        }
+
+        /* Progress bar styles */
+        .progress-container {
+            position: absolute;
+            bottom: 5px;
+            left: 20px;
+            right: 20px;
+            width: calc(100% - 40px);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #999999;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 0.4875em;
+            opacity: 0.6;
+            font-weight: 500;
+        }
+        
+        .progress-title {
+            font-size: 0.78em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.6;
+            text-align: left;
+        }
+
+        .metric-card.purple .progress-title,
+        .metric-card.blue .progress-title {
+            color: white !important;
+            opacity: 1;
+        }
+
+        .metric-card.light-purple .progress-title {
+            color: #001C66;
+            opacity: 1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            background: #0079FF;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .modal-header.inputs {
+            background: #0079FF;
+        }
+
+        .modal-header.inventory {
+            background: #8b3ffd;
+        }
+
+        .modal-header.outcomes {
+            background: #b85c38;
+        }
+
+        .modal-title {
+            font-size: 1em;
+            font-weight: 600;
+            margin: 0;
+            color: white;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 300;
+            transition: opacity 0.2s ease;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 24px;
+            background: white;
+            color: #333;
+            max-height: calc(85vh - 60px);
+            overflow-y: auto;
+        }
+
+        .metric-description {
+            background: white;
+            padding: 0;
+            line-height: 1.6;
+            font-size: 0.95em;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 1300px) {
+            .dashboard-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-row {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+            .metric-value {
+                font-size: 1.8em;
+            }
+            .section-circle {
+                width: 180px;
+                height: 180px;
+                font-size: 0.95em;
+            }
+            .metric-card,
+            .empty-space {
+                width: 180px;
+                height: 180px;
+            }
+            .metric-card {
+                padding: 30px 18px 55px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AOM Tooling Governance FY26</h1>
+        </div>
+
+        <div id="dashboard-container">
+            <div class="loading-container">Loading dashboard data...</div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="trendModal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <h3 class="modal-title" id="modalTitle">Metric Details</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="metric-description" id="metricDescription"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to store metrics data
+        let metricsData = {};
+        let metricsBySection = {};
+
+        // Default fallback data when CSV is not available
+        const defaultMetricsData = {
+            'discovery_calls': {
+                metric_id: 'discovery_calls',
+                section: 'inputs',
+                status: 'Null',
+                value: '0',
+                label: 'Discovery Calls',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'capabilities_defined': {
+                metric_id: 'capabilities_defined',
+                section: 'inputs',
+                status: 'Null',
+                value: '0',
+                label: 'D&A Capabilities Defined',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'sme_capabilities': {
+                metric_id: 'sme_capabilities',
+                section: 'inputs',
+                status: 'Null',
+                value: '0',
+                label: 'Managed Capabilities',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'csat_response': {
+                metric_id: 'csat_response',
+                section: 'inputs',
+                status: 'Null',
+                value: '0',
+                label: 'CSAT Respondents',
+                progress_title: 'CSAT response rate:',
+                progress_value: '0',
+                description: 'No data available'
+            },
+            'tools': {
+                metric_id: 'tools',
+                section: 'inventory',
+                status: 'Null',
+                value: '0',
+                label: 'Tools Discovered',
+                progress_title: 'SysAdmins located:',
+                progress_value: '0',
+                description: 'No data available'
+            },
+            'accounts': {
+                metric_id: 'accounts',
+                section: 'inventory',
+                status: 'Null',
+                value: '0',
+                label: 'Tool User Accounts',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'users': {
+                metric_id: 'users',
+                section: 'inventory',
+                status: 'Null',
+                value: '0',
+                label: 'Unique Users',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'commercial': {
+                metric_id: 'commercial',
+                section: 'inventory',
+                status: 'Null',
+                value: '0',
+                label: 'Commercial Tools',
+                progress_title: 'In Coupa or Zycus:',
+                progress_value: '0',
+                description: 'No data available'
+            },
+            'opensource': {
+                metric_id: 'opensource',
+                section: 'inventory',
+                status: 'Null',
+                value: '0',
+                label: 'Open Source Tools',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'spend': {
+                metric_id: 'spend',
+                section: 'inventory',
+                status: 'Null',
+                value: '$0',
+                label: 'FY26 Tool Spend',
+                progress_title: 'Tool Coverage:',
+                progress_value: '0',
+                description: 'No data available'
+            },
+            'savings': {
+                metric_id: 'savings',
+                section: 'outcomes',
+                status: 'Null',
+                value: '$0',
+                label: 'Savings Achieved',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'potential': {
+                metric_id: 'potential',
+                section: 'outcomes',
+                status: 'Null',
+                value: '$0',
+                label: 'Potential Savings',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'csat': {
+                metric_id: 'csat',
+                section: 'outcomes',
+                status: 'Null',
+                value: '0',
+                label: 'Tool User CSAT',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'retired': {
+                metric_id: 'retired',
+                section: 'outcomes',
+                status: 'Null',
+                value: '0',
+                label: 'Tools Retired',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            },
+            'new_tools': {
+                metric_id: 'new_tools',
+                section: 'outcomes',
+                status: 'Null',
+                value: '0',
+                label: 'New Tools Added',
+                progress_title: '',
+                progress_value: '',
+                description: 'No data available'
+            }
+        };
+
+        // Configuration for card colors based on metric_id
+        const cardColorMap = {
+            // Discovery Inputs
+            'discovery_calls': 'light-gray',
+            'capabilities_defined': 'blue',
+            'sme_capabilities': 'light-gray',
+            'csat_response': 'blue',
+            // Discovery Outputs
+            'tools': 'light-purple',
+            'accounts': 'purple',
+            'users': 'light-purple',
+            'commercial': 'purple',
+            'opensource': 'light-purple',
+            'spend': 'purple',
+            // Outcomes
+            'savings': 'light-orange',
+            'potential': 'orange',
+            'csat': 'light-orange',
+            'retired': 'orange',
+            'new_tools': 'light-orange'
+        };
+
+        // Section display names
+        const sectionDisplayNames = {
+            'inputs': 'Discovery<br>Inputs',
+            'inventory': 'Discovery<br>Outputs',
+            'outcomes': 'Outcomes'
+        };
+
+        // Layout configuration - defines the structure of each row
+        const dashboardLayout = [
+            { section: 'inputs', items: ['section', 'discovery_calls', 'capabilities_defined', 'sme_capabilities'] },
+            { section: 'inputs', items: ['empty', 'csat_response', 'empty', 'empty'] },
+            { section: 'inventory', items: ['section', 'tools', 'accounts', 'users'] },
+            { section: 'inventory', items: ['empty', 'commercial', 'opensource', 'spend'] },
+            { section: 'outcomes', items: ['section', 'savings', 'potential', 'csat'] },
+            { section: 'outcomes', items: ['empty', 'retired', 'new_tools', 'empty'] }
+        ];
+
+        // Load and parse CSV data
+        async function loadMetricsData() {
+            try {
+                const response = await fetch('metrics-data.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                
+                // Parse CSV using Papa Parse
+                const results = Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    trimHeaders: true,
+                    transformHeader: (header) => header.trim()
+                });
+
+                if (results.errors.length > 0) {
+                    console.warn('CSV parsing warnings:', results.errors);
+                }
+
+                // Process and organize data
+                results.data.forEach(row => {
+                    // Trim all values in the row
+                    Object.keys(row).forEach(key => {
+                        row[key] = row[key] ? row[key].trim() : '';
+                    });
+
+                    const metricId = row['metric_id'];
+                    const section = row['section'];
+                    
+                    if (metricId && section) {
+                        metricsData[metricId] = row;
+                        
+                        if (!metricsBySection[section]) {
+                            metricsBySection[section] = [];
+                        }
+                        metricsBySection[section].push(row);
+                    }
+                });
+
+                renderDashboard();
+            } catch (error) {
+                console.warn('CSV file not found or could not be loaded. Using default values.', error);
+                useDefaultData();
+            }
+        }
+
+        // Use default data when CSV is not available
+        function useDefaultData() {
+            metricsData = defaultMetricsData;
+            
+            // Organize default data by section
+            Object.values(defaultMetricsData).forEach(metric => {
+                const section = metric.section;
+                if (!metricsBySection[section]) {
+                    metricsBySection[section] = [];
+                }
+                metricsBySection[section].push(metric);
+            });
+            
+            renderDashboard();
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('dashboard-container');
+            container.innerHTML = `
+                <div class="error-container">
+                    <h2>Error Loading Dashboard</h2>
+                    <p>${message}</p>
+                    <p>Please ensure the metrics-data.csv file is in the same directory as this HTML file.</p>
+                </div>
+            `;
+        }
+
+        // Create a metric card element
+        function createMetricCard(metric) {
+            const colorClass = cardColorMap[metric.metric_id] || 'light-gray';
+            const hasProgress = metric.progress_title && metric.progress_value;
+            
+            const progressHtml = hasProgress ? `
+                <div class="progress-container">
+                    <div class="progress-title">${metric.progress_title}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${metric.progress_value}%; background: #999999;"></div>
+                    </div>
+                    <div class="progress-labels">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            ` : '';
+
+            return `
+                <div class="metric-card ${colorClass}" onclick="showModal('${metric.label}', '${metric.metric_id}')">
+                    <div class="status-indicator">${metric.status || 'Pending'}</div>
+                    <div class="metric-value">${metric.value}</div>
+                    <div class="metric-label">${metric.label}</div>
+                    ${progressHtml}
+                </div>
+            `;
+        }
+
+        // Create a section circle element
+        function createSectionCircle(section) {
+            return `
+                <div class="section-circle ${section}">
+                    <strong>${sectionDisplayNames[section]}</strong>
+                </div>
+            `;
+        }
+
+        // Render the dashboard
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-container');
+            let html = '';
+
+            dashboardLayout.forEach((row, rowIndex) => {
+                html += '<div class="dashboard-row">';
+                
+                row.items.forEach(item => {
+                    if (item === 'section') {
+                        html += createSectionCircle(row.section);
+                    } else if (item === 'empty') {
+                        html += '<div class="empty-space"></div>';
+                    } else {
+                        const metric = metricsData[item];
+                        if (metric) {
+                            html += createMetricCard(metric);
+                        } else {
+                            html += '<div class="empty-space"></div>';
+                        }
+                    }
+                });
+                
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Show modal with metric details
+        function showModal(title, metricId) {
+            const modal = document.getElementById('trendModal');
+            const modalHeader = document.getElementById('modalHeader');
+            const modalTitle = document.getElementById('modalTitle');
+            const metricDescription = document.getElementById('metricDescription');
+            
+            const metric = metricsData[metricId];
+            if (!metric) return;
+            
+            // Determine section and set header class
+            modalHeader.className = 'modal-header';
+            if (metric.section === 'inputs') {
+                modalHeader.classList.add('inputs');
+            } else if (metric.section === 'inventory') {
+                modalHeader.classList.add('inventory');
+            } else if (metric.section === 'outcomes') {
+                modalHeader.classList.add('outcomes');
+            }
+            
+            modalTitle.textContent = title;
+            metricDescription.textContent = metric.description || 'No description available.';
+            
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('trendModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('trendModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize dashboard on page load
+        document.addEventListener('DOMContentLoaded', loadMetricsData);
+    </script>
+</body>
+</html>
